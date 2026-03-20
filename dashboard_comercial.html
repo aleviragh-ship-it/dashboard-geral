@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Dashboard — Luis Suplicy</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0d0f;--bg2:#141517;--bg3:#1c1e21;--bg4:#232628;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#eceae4;--text2:#7a7874;--text3:#484644;
+  --purple:#8b7fff;--green:#3ecf8e;--amber:#f5a623;--red:#f05252;--blue:#4fa3ff;--teal:#22d3c5;
+  --purple-d:rgba(139,127,255,0.12);--green-d:rgba(62,207,142,0.10);--amber-d:rgba(245,166,35,0.10);--red-d:rgba(240,82,82,0.10);
+  --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;--r:10px;--r2:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;padding:14px 12px 40px}
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.hdr h1{font-size:17px;font-weight:600;letter-spacing:-.02em}
+.hdr .eye{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--purple);text-transform:uppercase;margin-bottom:3px}
+.hdr-right{font-family:var(--mono);font-size:9px;color:var(--text3);text-align:right;line-height:1.9}
+/* FILTER BAR */
+.fb{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fl{font-family:var(--mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--text3)}
+.fg select,.fg input{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--font);font-size:12px;padding:5px 8px;outline:none;cursor:pointer;min-width:95px}
+.fg select:focus{border-color:var(--purple)}
+.btn{border:none;border-radius:6px;padding:6px 14px;font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;align-self:flex-end;transition:opacity .15s}
+.btn-p{background:var(--purple);color:#fff}.btn-p:hover{opacity:.85}
+.btn-s{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.fi{font-family:var(--mono);font-size:9px;color:var(--purple);align-self:flex-end;padding-bottom:1px}
+/* TABS */
+.tabs{display:flex;gap:3px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:3px;overflow-x:auto}
+.tab{padding:6px 11px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all .18s;font-family:var(--font);white-space:nowrap;flex-shrink:0}
+.tab.active{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.panel{display:none}.panel.active{display:block}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+@media(max-width:680px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 13px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r2) var(--r2) 0 0}
+.kpi.p::after{background:var(--purple)}.kpi.g::after{background:var(--green)}.kpi.a::after{background:var(--amber)}.kpi.r::after{background:var(--red)}.kpi.b::after{background:var(--blue)}.kpi.t::after{background:var(--teal)}
+.kpi-l{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:5px}
+.kpi-v{font-size:19px;font-weight:600;letter-spacing:-.02em;margin-bottom:2px;line-height:1}
+.kpi-s{font-size:10px;color:var(--text3)}
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:9px}
+.g64{display:grid;grid-template-columns:1.5fr 1fr;gap:9px;margin-bottom:9px}
+@media(max-width:620px){.g2,.g3,.g64{grid-template-columns:1fr}}
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px 14px 11px;margin-bottom:9px}
+.card:last-child{margin-bottom:0}
+.ct{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:3px}
+.ct em{color:var(--text3);font-style:normal;font-size:9px}
+canvas{max-height:180px;width:100%!important}
+/* INSIGHT */
+.ins{border-radius:7px;padding:9px 11px;font-size:11px;line-height:1.75;margin-top:9px}
+.ins b{font-weight:500}
+.ins.info{background:var(--purple-d);border:1px solid rgba(139,127,255,.18);color:#c5bfff}.ins.info b{color:#e0dcff}
+.ins.warn{background:var(--red-d);border:1px solid rgba(240,82,82,.18);color:#ffb0b0}.ins.warn b{color:#ffd0d0}
+.ins.ok{background:var(--green-d);border:1px solid rgba(62,207,142,.18);color:#8effd4}.ins.ok b{color:#c0ffe8}
+.ins.amber{background:var(--amber-d);border:1px solid rgba(245,166,35,.18);color:#ffd580}
+/* TABLE */
+.tbl-wrap{overflow-x:auto;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
+tr:hover td{background:var(--bg3);color:var(--text)}
+.badge{display:inline-block;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:500;font-family:var(--mono)}
+.b-vip{background:rgba(139,127,255,.2);color:#c4bbff}
+.b-rec{background:rgba(62,207,142,.15);color:#5fe8aa}
+.b-2x{background:rgba(79,163,255,.15);color:#7fc2ff}
+.b-1x{background:rgba(240,82,82,.15);color:#ff9090}
+.b-loja{background:rgba(245,166,35,.12);color:#f5a623}
+.b-site{background:rgba(139,127,255,.12);color:#8b7fff}
+.b-ambos{background:rgba(34,211,197,.12);color:#22d3c5}
+.b-hot{color:#f05252;font-weight:600}
+.b-morno{color:#f5a623}
+.b-frio{color:#4fa3ff}
+/* FORNECEDORES */
+.forn-item{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.forn-rank{font-family:var(--mono);font-size:9px;color:var(--text3);width:14px;flex-shrink:0}
+.forn-name{font-size:12px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.forn-bar-wrap{width:80px;height:3px;background:var(--bg4);border-radius:2px;flex-shrink:0}
+.forn-bar{height:3px;border-radius:2px;background:var(--purple)}
+.forn-val{font-family:var(--mono);font-size:10px;color:var(--text2);text-align:right;flex-shrink:0;min-width:75px}
+/* RETENÇÃO */
+.ret-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.ret-row .rl{color:var(--text2)}.ret-row .rv{font-weight:500;font-family:var(--mono);font-size:11px}
+/* META */
+.meta-row{margin-bottom:8px}
+.meta-row .mh{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.meta-row .ml{color:var(--text2)}.meta-row .mp{font-family:var(--mono);font-size:10px}
+.meta-track{height:3px;background:var(--bg4);border-radius:2px}
+.meta-fill{height:3px;border-radius:2px}
+.nota{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:6px;line-height:1.6}
+/* ESTRATEGIA */
+.strat-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:9px}
+.strat-ttl{font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.strat-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;font-family:var(--mono);flex-shrink:0}
+.strat-body{font-size:12px;line-height:1.8;color:var(--text2)}
+.strat-body b{color:var(--text);font-weight:500}
+.tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10px;font-family:var(--mono);margin:2px 2px 2px 0}
+.tag-p{background:var(--purple-d);color:#c4bbff}
+.tag-g{background:var(--green-d);color:#5fe8aa}
+.tag-a{background:var(--amber-d);color:#ffd580}
+.tag-r{background:var(--red-d);color:#ff9090}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="eye">Dashboard Comercial</div>
+    <h1>Luis Suplicy</h1>
+  </div>
+  <div class="hdr-right" id="hdr-info"></div>
+</div>
+
+<!-- FILTER BAR GLOBAL -->
+<div class="fb" id="global-fb">
+  <div class="fg"><div class="fl">De</div><select id="f-from"></select></div>
+  <div class="fg"><div class="fl">Até</div><select id="f-to"></select></div>
+  <div class="fg"><div class="fl">Canal</div>
+    <select id="f-canal">
+      <option value="total">Todos</option>
+      <option value="site">Site</option>
+      <option value="loja">Loja Física</option>
+    </select>
+  </div>
+  <button class="btn btn-p" onclick="applyFilter()">Aplicar</button>
+  <button class="btn btn-s" onclick="resetFilter()">Resetar</button>
+  <div class="fi" id="fi"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="setTab('vendas',this)">Vendas</button>
+  <button class="tab" onclick="setTab('clientes',this)">Clientes VIP</button>
+  <button class="tab" onclick="setTab('sumidos',this)">Clientes 1x</button>
+  <button class="tab" onclick="setTab('ticket',this)">Ticket & Peças</button>
+  <button class="tab" onclick="setTab('retencao',this)">Retenção</button>
+  <button class="tab" onclick="setTab('fornecedores',this)">Fornecedores</button>
+  <button class="tab" onclick="setTab('estrategia',this)">🧠 Estratégia</button>
+</div>
+
+<!-- ══════════════ VENDAS ══════════════ -->
+<div class="panel active" id="panel-vendas">
+  <div class="kpis">
+    <div class="kpi p"><div class="kpi-l">Receita período</div><div class="kpi-v" id="kv-r">—</div><div class="kpi-s" id="kv-rs"></div></div>
+    <div class="kpi g"><div class="kpi-l">Meta período</div><div class="kpi-v" id="kv-m">—</div><div class="kpi-s" id="kv-ms"></div></div>
+    <div class="kpi a"><div class="kpi-l">Atingimento</div><div class="kpi-v" id="kv-a">—</div><div class="kpi-s" id="kv-as"></div></div>
+    <div class="kpi r"><div class="kpi-l">Gap</div><div class="kpi-v" id="kv-g">—</div><div class="kpi-s" id="kv-gs"></div></div>
+  </div>
+  <div class="card">
+    <div class="ct">Receita mensal <em id="ttl-v"></em></div>
+    <canvas id="cVendas"></canvas>
+  </div>
+  <div class="card">
+    <div class="ct">Progresso vs Meta 2026</div>
+    <div id="meta-rows"></div>
+    <div class="nota" id="nota-m"></div>
+  </div>
+</div>
+
+<!-- ══════════════ CLIENTES VIP ══════════════ -->
+<div class="panel" id="panel-clientes">
+  <div class="kpis">
+    <div class="kpi p"><div class="kpi-l">VIP (10+ pedidos)</div><div class="kpi-v">308</div><div class="kpi-s">4,4% da base</div></div>
+    <div class="kpi g"><div class="kpi-l">Receita VIP</div><div class="kpi-v">R$2,59M</div><div class="kpi-s">32,5% da receita total</div></div>
+    <div class="kpi a"><div class="kpi-l">Recorrentes (3–9x)</div><div class="kpi-v">1.630</div><div class="kpi-s">23,4% da base</div></div>
+    <div class="kpi t"><div class="kpi-l">Receita recorrentes</div><div class="kpi-v">R$3,07M</div><div class="kpi-s">38,5% da receita total</div></div>
+  </div>
+  <!-- filtros específicos clientes -->
+  <div class="fb" style="margin-bottom:9px">
+    <div class="fg"><div class="fl">Categoria</div>
+      <select id="f-cli-cat" onchange="renderClientes()">
+        <option value="">Todas</option>
+        <option value="VIP">VIP (10+)</option>
+        <option value="Recorrente">Recorrente (3-9x)</option>
+      </select>
+    </div>
+    <div class="fg"><div class="fl">Canal</div>
+      <select id="f-cli-canal" onchange="renderClientes()">
+        <option value="">Todos</option>
+        <option value="Ambos">Ambos canais</option>
+        <option value="Loja">Só Loja</option>
+        <option value="Site">Só Site</option>
+      </select>
+    </div>
+    <div class="fg"><div class="fl">Situação</div>
+      <select id="f-cli-sit" onchange="renderClientes()">
+        <option value="">Todas</option>
+        <option value="ativo">Ativo (&lt;90 dias)</option>
+        <option value="risco">Em risco (90-180 dias)</option>
+        <option value="perdido">Perdido (&gt;180 dias)</option>
+      </select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Top clientes por receita <em id="cli-count"></em></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Cliente</th><th>Receita</th><th>Pedidos</th><th>Ticket</th><th>1ª compra</th><th>Última</th><th>Status</th><th>Canal</th><th>Cat.</th></tr></thead>
+        <tbody id="cli-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="ins info"><b>71% da receita total vem de apenas 28% da base</b> (VIP + Recorrentes). Os VIPs compram em média a cada 15-30 dias e usam ambos os canais — são o núcleo do negócio. Foco em mantê-los é mais barato do que adquirir novos.</div>
+</div>
+
+<!-- ══════════════ CLIENTES 1x ══════════════ -->
+<div class="panel" id="panel-sumidos">
+  <div class="kpis">
+    <div class="kpi r"><div class="kpi-l">Clientes 1x</div><div class="kpi-v">5.254</div><div class="kpi-s">75,4% da base total</div></div>
+    <div class="kpi a"><div class="kpi-l">Receita represada</div><div class="kpi-v">R$4,67M</div><div class="kpi-s">gasto na 1ª visita</div></div>
+    <div class="kpi p"><div class="kpi-l">Ticket médio 1x</div><div class="kpi-v">R$889</div><div class="kpi-s">compraram bem — sumiram</div></div>
+    <div class="kpi g"><div class="kpi-l">Potencial reativação</div><div class="kpi-v">~R$2M</div><div class="kpi-s">se 30% voltarem 1x</div></div>
+  </div>
+  <div class="fb" style="margin-bottom:9px">
+    <div class="fg"><div class="fl">Urgência</div>
+      <select id="f-1x-urg" onchange="render1x()">
+        <option value="">Todas</option>
+        <option value="quente">Quente (&lt;90 dias)</option>
+        <option value="morno">Morno (90-365 dias)</option>
+        <option value="frio">Frio (&gt;365 dias)</option>
+      </select>
+    </div>
+    <div class="fg"><div class="fl">Canal</div>
+      <select id="f-1x-canal" onchange="render1x()">
+        <option value="">Todos</option>
+        <option value="Loja">Loja</option>
+        <option value="Site">Site</option>
+      </select>
+    </div>
+    <div class="fg"><div class="fl">Ticket mín.</div>
+      <select id="f-1x-ticket" onchange="render1x()">
+        <option value="0">Qualquer</option>
+        <option value="1000">R$ 1.000+</option>
+        <option value="2000">R$ 2.000+</option>
+        <option value="3000">R$ 3.000+</option>
+      </select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Clientes que compraram 1x e sumiram <em id="1x-count"></em></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Cliente</th><th>Valor gasto</th><th>Quando</th><th>Dias sem comprar</th><th>Canal</th><th>Urgência</th></tr></thead>
+        <tbody id="1x-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="ins warn"><b>75,4% da base comprou só uma vez.</b> O ticket médio dessas clientes é R$889 — elas claramente gostaram o suficiente para gastar, mas nunca foram trazidas de volta. Uma campanha de reativação segmentada por urgência e canal tem ROI altíssimo aqui.</div>
+</div>
+
+<!-- ══════════════ TICKET & PEÇAS ══════════════ -->
+<div class="panel" id="panel-ticket">
+  <div class="kpis">
+    <div class="kpi p"><div class="kpi-l">Ticket médio site</div><div class="kpi-v" id="kt-site">—</div><div class="kpi-s">média do período</div></div>
+    <div class="kpi g"><div class="kpi-l">Ticket médio loja</div><div class="kpi-v" id="kt-loja">—</div><div class="kpi-s">média do período</div></div>
+    <div class="kpi a"><div class="kpi-l">Peças/pedido site</div><div class="kpi-v" id="kp-site">—</div><div class="kpi-s">média do período</div></div>
+    <div class="kpi t"><div class="kpi-l">Peças/pedido loja</div><div class="kpi-v" id="kp-loja">—</div><div class="kpi-s">média do período</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct">Ticket médio <em>R$/pedido, filtro ativo</em></div>
+      <canvas id="cTicket"></canvas>
+      <div class="ins info"><b>Loja tem ticket 30–50% maior.</b> O cliente presencial sai com mais peças. Oportunidade no site: cross-sell no checkout ("complete o look").</div>
+    </div>
+    <div class="card">
+      <div class="ct">Peças por pedido <em>filtro ativo</em></div>
+      <canvas id="cPecas"></canvas>
+      <div class="ins ok"><b>Site jan/26: 2,32 peças/pedido</b> — maior da história. Sinal que o sortimento ou promoções estão funcionando melhor.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ RETENÇÃO ══════════════ -->
+<div class="panel" id="panel-retencao">
+  <div class="kpis">
+    <div class="kpi r"><div class="kpi-l">Retenção 24→25</div><div class="kpi-v">38,3%</div><div class="kpi-s">1.599 de 4.178 voltaram</div></div>
+    <div class="kpi a"><div class="kpi-l">Clientes perdidos</div><div class="kpi-v">2.579</div><div class="kpi-s">não voltaram em 2025</div></div>
+    <div class="kpi p"><div class="kpi-l">Churn médio/mês</div><div class="kpi-v">~78%</div><div class="kpi-s">não volta no mês seguinte</div></div>
+    <div class="kpi g"><div class="kpi-l">Melhor mês</div><div class="kpi-v">64,3%</div><div class="kpi-s">dez/2025</div></div>
+  </div>
+  <div class="g64">
+    <div class="card">
+      <div class="ct">Churn mensal (%) <em>filtro de data ativo</em></div>
+      <canvas id="cChurn"></canvas>
+      <div class="ins warn"><b>64–85% de churn mensal é estruturalmente crítico.</b> Cada 5pp de redução equivale a ~R$200k/ano em receita recorrente adicional sem precisar adquirir nenhum cliente novo.</div>
+    </div>
+    <div class="card">
+      <div class="ct">Retenção anual 2024→2025</div>
+      <div style="margin:8px 0">
+        <div class="ret-row"><span class="rl">Compraram 2024</span><span class="rv">4.178</span></div>
+        <div class="ret-row"><span class="rl">Voltaram 2025</span><span class="rv" style="color:var(--green)">1.599</span></div>
+        <div class="ret-row"><span class="rl">Não voltaram</span><span class="rv" style="color:var(--red)">2.579</span></div>
+        <div class="ret-row"><span class="rl">Taxa de retenção</span><span class="rv">38,3%</span></div>
+        <div class="ret-row"><span class="rl">Benchmark saudável</span><span class="rv" style="color:var(--amber)">45–60%</span></div>
+      </div>
+      <div class="ins amber"><b>2.579 clientes que você já conquistou e pagou para adquirir</b> simplesmente não voltaram. Se metade deles tivesse voltado com 1 pedido de R$500, seria +R$645k em 2025.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FORNECEDORES ══════════════ -->
+<div class="panel" id="panel-fornecedores">
+  <div class="kpis">
+    <div class="kpi p"><div class="kpi-l">Maior forn. (período)</div><div class="kpi-v" id="forn-top-nome" style="font-size:15px">—</div><div class="kpi-s" id="forn-top-pct"></div></div>
+    <div class="kpi a"><div class="kpi-l">Top 3 concentração</div><div class="kpi-v" id="forn-top3">—</div><div class="kpi-s" id="forn-top3-sub"></div></div>
+    <div class="kpi g"><div class="kpi-l">Receita total período</div><div class="kpi-v" id="forn-total-r">—</div><div class="kpi-s">período filtrado</div></div>
+    <div class="kpi r"><div class="kpi-l">Fornecedores ativos</div><div class="kpi-v" id="forn-ativos">—</div><div class="kpi-s">no período</div></div>
+  </div>
+  <div class="g64">
+    <div class="card">
+      <div class="ct">Ranking por receita <em id="forn-periodo-ttl"></em></div>
+      <div id="forn-list"></div>
+      <div class="ins warn" style="margin-top:10px" id="forn-ins"></div>
+    </div>
+    <div class="card">
+      <div class="ct">Evolução mensal <em>top 5</em></div>
+      <canvas id="cForn" style="max-height:220px"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ESTRATÉGIA ══════════════ -->
+<div class="panel" id="panel-estrategia">
+  <div class="ins info" style="margin-bottom:12px"><b>Análise do gestor:</b> o que os dados dizem e o que eu faria — incluindo direção de conteúdo para o estrategista.</div>
+
+  <div class="strat-block">
+    <div class="strat-ttl"><div class="strat-num" style="background:var(--red-d);color:var(--red)">01</div>Problema central: aquisição cara, retenção baixa</div>
+    <div class="strat-body">
+      O negócio tem <b>75,4% da base comprando uma única vez</b>. Isso significa que o custo de aquisição está sendo pago inteiro sem amortização. A prioridade não é adquirir mais clientes — é fazer as 5.254 que já compraram <b>voltarem uma segunda vez</b>.<br><br>
+      <b>O que eu faria:</b> Campanha de reativação segmentada em 3 grupos:<br>
+      <span class="tag tag-r">Quentes (&lt;90 dias)</span> — WhatsApp/e-mail direto: "Saudade de você, separamos algo novo"<br>
+      <span class="tag tag-a">Mornos (90–365 dias)</span> — Oferta específica: frete grátis ou desconto na 2ª compra<br>
+      <span class="tag tag-p">Frios (&gt;365 dias)</span> — Reengajamento por novidade de coleção ou evento exclusivo na loja
+    </div>
+  </div>
+
+  <div class="strat-block">
+    <div class="strat-ttl"><div class="strat-num" style="background:var(--green-d);color:var(--green)">02</div>Os VIPs são o ativo mais precioso — e estão sub-aproveitados</div>
+    <div class="strat-body">
+      <b>308 clientes VIP geram R$2,59M</b> — 32,5% da receita total. O ticket médio delas é 3x a média geral. A maioria usa ambos os canais (loja + site), o que indica que o relacionamento pessoal na loja <b>converte em compras digitais depois</b>.<br><br>
+      <b>O que eu faria:</b> Programa de fidelização formal — acesso antecipado a coleções, convite para eventos na loja, lista VIP para lançamentos. Custo baixíssimo, impacto alto em retenção. Clientes como Kamilla (105 pedidos) e Silvia (78 pedidos) precisam ser <b>tratadas por nome</b>.
+    </div>
+  </div>
+
+  <div class="strat-block">
+    <div class="strat-ttl"><div class="strat-num" style="background:var(--amber-d);color:var(--amber)">03</div>Risco de concentração em Aqua1 — e Tatiju sumiu</div>
+    <div class="strat-body">
+      <b>Aqua1 cresceu de ~R$107k/mês (dez/24) para R$156k (jan/26)</b> — está se tornando mais dominante. Tatiju, que era o 2º maior, praticamente desapareceu em 2025 (de R$150k/dez24 para R$79 em fev/26).<br><br>
+      <b>O que eu faria:</b> Audit de mix imediato. Aqua1 sendo &gt;20% da receita é risco operacional. Qualquer ruptura, atraso ou conflito comercial compromete o faturamento. Diversificar para que nenhum fornecedor passe de 15%.
+    </div>
+  </div>
+
+  <div class="strat-block">
+    <div class="strat-ttl"><div class="strat-num" style="background:var(--purple-d);color:var(--purple)">04</div>Direção de conteúdo para o estrategista</div>
+    <div class="strat-body">
+      Com base nos dados, o conteúdo deve servir a <b>três objetivos simultâneos</b>:<br><br>
+      <b>1. Reativação (fundo de funil):</b><br>
+      Conteúdo focado em "como usar" as peças que já vendemos — looks com produtos existentes. Isso gera lembrança de marca nas clientes que compraram e sumiram sem ser invasivo.<br>
+      <span class="tag tag-p">Reels de looks</span><span class="tag tag-p">Como combinar X com Y</span><span class="tag tag-p">Novidades da coleção atual</span><br><br>
+
+      <b>2. Retenção VIP (topo do relacionamento):</b><br>
+      Conteúdo exclusivo que faça as melhores clientes se sentirem especiais. Bastidores, chegada de coleções, seleção curada pela loja.<br>
+      <span class="tag tag-g">Stories de bastidores</span><span class="tag tag-g">Chegou na loja</span><span class="tag tag-g">Seleção da semana</span><br><br>
+
+      <b>3. Aquisição (topo de funil):</b><br>
+      Conteúdo aspiracional que mostre o estilo de vida da marca — sem ser apenas "produto à venda". O ponto de dor é que 75% das novas clientes não voltam, então o conteúdo precisa criar identificação antes da 1ª compra para que a retenção melhore organicamente.<br>
+      <span class="tag tag-a">Perfil de clientes reais</span><span class="tag tag-a">UGC (fotos de clientes)</span><span class="tag tag-a">Tendências + como incorporar</span><br><br>
+
+      <b>O que EVITAR:</b> conteúdo genérico de "promoção" ou "produto" sem contexto de uso. A margem é alta (ticket médio R$383–889) — o posicionamento precisa sustentar isso.
+    </div>
+  </div>
+
+  <div class="strat-block">
+    <div class="strat-ttl"><div class="strat-num" style="background:var(--blue-d);color:var(--blue)">05</div>Meta 2026: o que precisa acontecer</div>
+    <div class="strat-body">
+      A meta de <b>R$3,965M em 2026 (+24,7% vs 2025)</b> é viável mas não automática. Jan/26 atingiu 95,6% da meta. Fev/26 atingiu 87,8% (R$290k vs R$330k).<br><br>
+      <b>Para bater a meta, precisaria acontecer as 3 coisas ao mesmo tempo:</b><br>
+      <span class="tag tag-g">Novas clientes</span> — manter entrada de 200–400/mês (hoje caiu para 162–208)<br>
+      <span class="tag tag-a">Reativação</span> — converter pelo menos 20% das 5.254 que compraram 1x<br>
+      <span class="tag tag-r">Churn</span> — reduzir de 78% para 70% no mês a mês<br><br>
+      O item mais impactante e mais controlável é a <b>reativação das clientes 1x</b> — elas já conhecem a marca, já compraram bem, e não exigem nenhum custo de aquisição.
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DADOS CENTRAIS (deduplicados)
+// ══════════════════════════════════════════
+const ALL_MONTHS = ['2024-01','2024-02','2024-03','2024-04','2024-05','2024-06','2024-07','2024-08','2024-09','2024-10','2024-11','2024-12','2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01','2026-02'];
+
+const DATA = {
+  receita_site:{s:'2024-01',v:[92000,121241,96082,52964,98556,40795,78742,17909,44665,38819,80241,84252,109674,63156,57423,27683,34772,32554,57134,35820,24776,28228,59588,73216,101841,48398]},
+  receita_loja:{s:'2024-01',v:[220185,283700,245036,279421,262261,207250,254260,186427,200187,201004,282788,553480,194096,226951,181292,189745,241943,201441,239931,208909,203164,208815,252232,602958,213429,241408]},
+  ticket_site:{s:'2024-01',v:[345.86,279.36,327.92,337.35,242.75,279.42,266.02,358.17,354.48,343.53,285.56,331.7,255.06,233.05,267.08,321.89,319.01,316.06,266.98,293.61,302.15,332.1,331.05,348.65,344.06,260.21]},
+  ticket_loja:{s:'2024-01',v:[419.4,403.56,506.27,579.71,432.06,494.63,413.43,360.59,553.0,497.53,462.07,487.65,357.45,381.43,463.66,532.99,560.05,467.38,429.22,425.48,455.52,440.54,493.6,458.52,333.48,267.93]},
+  ppp_site:{s:'2024-01',v:[1.45,1.61,1.77,1.62,1.74,1.41,1.87,1.32,1.46,1.44,1.70,1.37,1.70,1.68,1.47,1.41,1.39,1.39,1.91,2.17,1.44,1.51,1.48,1.47,2.32,1.96]},
+  ppp_loja:{s:'2024-01',v:[2.09,2.36,2.49,2.65,2.40,2.24,2.60,2.85,2.27,2.13,2.23,2.02,2.34,2.82,2.21,2.31,2.50,2.23,2.66,3.03,2.16,2.15,2.31,2.20,2.60,2.62]},
+  novos:{s:'2024-01',v:[597,651,418,256,408,201,300,209,143,167,292,535,274,252,152,92,122,125,143,110,80,70,133,381,162,208]},
+  total_cli:{s:'2024-01',v:[597,781,613,448,721,419,643,448,364,397,658,1031,685,660,443,323,389,386,549,447,358,336,483,1049,643,759]},
+  churn:{s:'2024-02',v:[78.1,81.3,82.1,76.2,83.5,74.0,84.2,85.3,80.3,74.1,73.4,83.8,75.7,83.8,83.8,78.1,75.4,71.3,79.5,81.5,69.1,69.7,64.3,80.3,69.1]},
+  metas_2026:{s:'2026-01',v:[330000,330000,270000,245000,320000,260000,330000,270000,260000,300000,350000,700000]},
+};
+
+const FORN_MES = {"Aqua1":{"2024-01":42225,"2024-02":75268,"2024-03":38094,"2024-04":19214,"2024-05":34909,"2024-06":12409,"2024-07":18775,"2024-08":23476,"2024-09":30398,"2024-10":53535,"2024-11":58910,"2024-12":107404,"2025-01":64120,"2025-02":78476,"2025-03":59271,"2025-04":34597,"2025-05":56727,"2025-06":102250,"2025-07":169303,"2025-08":64212,"2025-09":65120,"2025-10":67509,"2025-11":106300,"2025-12":192942,"2026-01":156746,"2026-02":140257},"Tatiju":{"2024-01":92441,"2024-02":108038,"2024-03":56640,"2024-04":70459,"2024-05":84204,"2024-06":78993,"2024-07":88577,"2024-08":40702,"2024-09":40281,"2024-10":38268,"2024-11":43345,"2024-12":150872,"2025-01":70471,"2025-02":52497,"2025-03":51087,"2025-04":52702,"2025-05":73710,"2025-06":21088,"2025-07":24534,"2025-08":18487,"2025-09":147,"2025-10":147,"2026-02":79},"Nuki":{"2024-01":18292,"2024-02":27210,"2024-03":92554,"2024-04":87089,"2024-05":74147,"2024-06":49633,"2024-07":72745,"2024-08":19893,"2024-09":38677,"2024-10":33383,"2024-11":43471,"2024-12":12634,"2025-01":6270,"2025-02":13096,"2025-03":44485,"2025-04":24464,"2025-05":25642,"2025-06":28766,"2025-07":40732,"2025-08":45924,"2025-09":64092,"2025-10":49013,"2025-11":61200,"2025-12":91944,"2026-01":33943,"2026-02":22392},"esmeral":{"2024-01":6666,"2024-02":12117,"2024-03":8663,"2024-04":15072,"2024-05":15124,"2024-06":5717,"2024-07":17221,"2024-08":16879,"2024-09":32542,"2024-10":39281,"2024-11":60698,"2024-12":32282,"2025-01":21223,"2025-02":26968,"2025-03":6934,"2025-04":3406,"2025-05":16564,"2025-06":24180,"2025-07":19182,"2025-08":55505,"2025-09":68994,"2025-10":89249,"2025-11":77704,"2025-12":64222,"2026-01":35319,"2026-02":28823},"Maclagen":{"2024-01":68470,"2024-02":40549,"2024-03":37897,"2024-04":16840,"2024-05":27245,"2024-06":8000,"2024-07":19662,"2024-08":16888,"2024-09":35236,"2024-10":24070,"2024-11":42452,"2024-12":72415,"2025-01":37739,"2025-02":23402,"2025-03":7719,"2025-04":4060,"2025-05":1113,"2025-06":1697,"2025-07":1286,"2025-08":2762},"Alcance":{"2024-01":8151,"2024-02":11518,"2024-03":8480,"2024-04":26989,"2024-05":15824,"2024-06":25473,"2024-07":27352,"2024-08":10129,"2024-09":5964,"2024-10":6653,"2024-11":11187,"2024-12":5267,"2025-01":7889,"2025-02":4429,"2025-03":7611,"2025-04":29261,"2025-05":27554,"2025-06":16616,"2025-07":12108,"2025-08":13668,"2025-09":8369,"2025-10":3797,"2025-11":8950,"2025-12":9504,"2026-01":5934,"2026-02":5465},"Gule":{"2025-11":29395,"2025-12":63832,"2026-01":17943,"2026-02":6721}};
+
+const CLI_TOP50 = [{"nome":"Gisela Abud Nicolau","receita":58725,"pedidos":51,"ticket":1151,"primeira":"2024-12","ultima":"2026-02","dias":2,"canal":"Ambos","cat":"VIP"},{"nome":"Caroline Danielle Lima Leite","receita":50825,"pedidos":81,"ticket":627,"primeira":"2024-01","ultima":"2026-02","dias":2,"canal":"Ambos","cat":"VIP"},{"nome":"Kamilla FERNANDES","receita":47211,"pedidos":105,"ticket":450,"primeira":"2024-01","ultima":"2026-02","dias":1,"canal":"Ambos","cat":"VIP"},{"nome":"Debora Soares","receita":45993,"pedidos":39,"ticket":1179,"primeira":"2024-05","ultima":"2026-02","dias":23,"canal":"Loja","cat":"VIP"},{"nome":"Sasti Cruz","receita":43801,"pedidos":66,"ticket":664,"primeira":"2024-01","ultima":"2025-09","dias":169,"canal":"Ambos","cat":"VIP"},{"nome":"Roberta Righetti","receita":40309,"pedidos":55,"ticket":733,"primeira":"2024-01","ultima":"2026-02","dias":2,"canal":"Loja","cat":"VIP"},{"nome":"Juliana Gomes","receita":32294,"pedidos":15,"ticket":2153,"primeira":"2024-01","ultima":"2025-12","dias":72,"canal":"Loja","cat":"VIP"},{"nome":"Luciana Praxedes","receita":31574,"pedidos":74,"ticket":427,"primeira":"2024-01","ultima":"2026-01","dias":39,"canal":"Ambos","cat":"VIP"},{"nome":"Claudia Monteiro","receita":31287,"pedidos":32,"ticket":978,"primeira":"2024-04","ultima":"2025-11","dias":99,"canal":"Loja","cat":"VIP"},{"nome":"Maria Luísa Del Rosso","receita":31137,"pedidos":66,"ticket":472,"primeira":"2024-01","ultima":"2026-02","dias":1,"canal":"Ambos","cat":"VIP"},{"nome":"Ana Paula Grossi","receita":30282,"pedidos":34,"ticket":891,"primeira":"2024-04","ultima":"2026-02","dias":2,"canal":"Loja","cat":"VIP"},{"nome":"Stefane Medina","receita":28777,"pedidos":17,"ticket":1693,"primeira":"2024-01","ultima":"2025-10","dias":137,"canal":"Ambos","cat":"VIP"},{"nome":"Adriana Cristina Ferreira da Silva","receita":28634,"pedidos":60,"ticket":477,"primeira":"2024-01","ultima":"2026-02","dias":2,"canal":"Ambos","cat":"VIP"},{"nome":"Michele Macena","receita":27442,"pedidos":31,"ticket":885,"primeira":"2024-07","ultima":"2026-01","dias":38,"canal":"Loja","cat":"VIP"},{"nome":"Renata aguiar","receita":27332,"pedidos":64,"ticket":427,"primeira":"2024-01","ultima":"2026-02","dias":2,"canal":"Ambos","cat":"VIP"},{"nome":"Renata Garbelini corghi","receita":26974,"pedidos":27,"ticket":999,"primeira":"2024-02","ultima":"2026-01","dias":51,"canal":"Loja","cat":"VIP"},{"nome":"Georgia Moraes","receita":24693,"pedidos":17,"ticket":1453,"primeira":"2024-04","ultima":"2026-02","dias":8,"canal":"Loja","cat":"VIP"},{"nome":"Joice da Costa Santos","receita":24038,"pedidos":38,"ticket":633,"primeira":"2024-01","ultima":"2026-02","dias":8,"canal":"Ambos","cat":"VIP"},{"nome":"Eliane Oliveira","receita":23411,"pedidos":54,"ticket":434,"primeira":"2024-01","ultima":"2026-02","dias":16,"canal":"Ambos","cat":"VIP"},{"nome":"Fernanda Vilar","receita":23267,"pedidos":47,"ticket":495,"primeira":"2024-01","ultima":"2026-02","dias":11,"canal":"Ambos","cat":"VIP"},{"nome":"Silvia Regina sandes alves Alves","receita":23055,"pedidos":78,"ticket":296,"primeira":"2024-10","ultima":"2026-02","dias":1,"canal":"Ambos","cat":"VIP"},{"nome":"Marcela Gomes da Rocha Voris","receita":22961,"pedidos":21,"ticket":1093,"primeira":"2024-02","ultima":"2026-02","dias":26,"canal":"Loja","cat":"VIP"},{"nome":"Marilene Oliveira","receita":22790,"pedidos":18,"ticket":1266,"primeira":"2024-05","ultima":"2026-01","dias":44,"canal":"Loja","cat":"VIP"},{"nome":"Andrea Amaral","receita":22728,"pedidos":33,"ticket":689,"primeira":"2024-01","ultima":"2025-09","dias":171,"canal":"Loja","cat":"VIP"},{"nome":"Beatriz Medina","receita":22560,"pedidos":41,"ticket":550,"primeira":"2024-02","ultima":"2026-02","dias":15,"canal":"Ambos","cat":"VIP"},{"nome":"Catharina Camargo","receita":21842,"pedidos":40,"ticket":546,"primeira":"2024-01","ultima":"2025-12","dias":73,"canal":"Ambos","cat":"VIP"},{"nome":"Maira Thiebaut Neiva Sarcinelli","receita":21205,"pedidos":35,"ticket":606,"primeira":"2024-01","ultima":"2025-12","dias":71,"canal":"Ambos","cat":"VIP"},{"nome":"Tais Reis","receita":19677,"pedidos":20,"ticket":984,"primeira":"2024-02","ultima":"2026-01","dias":40,"canal":"Ambos","cat":"VIP"},{"nome":"Melina Lichti Martins","receita":19087,"pedidos":13,"ticket":1468,"primeira":"2024-08","ultima":"2025-12","dias":60,"canal":"Ambos","cat":"VIP"},{"nome":"Juliana Oliveira Xavier","receita":18261,"pedidos":42,"ticket":435,"primeira":"2024-02","ultima":"2026-02","dias":4,"canal":"Ambos","cat":"VIP"},{"nome":"Nathalia Figueiredo","receita":18128,"pedidos":33,"ticket":549,"primeira":"2024-02","ultima":"2026-02","dias":3,"canal":"Ambos","cat":"VIP"},{"nome":"Pauline Patricio","receita":17973,"pedidos":19,"ticket":946,"primeira":"2024-03","ultima":"2025-12","dias":72,"canal":"Loja","cat":"VIP"},{"nome":"Natalia Rodrigues","receita":17377,"pedidos":15,"ticket":1159,"primeira":"2024-01","ultima":"2026-01","dias":37,"canal":"Loja","cat":"VIP"},{"nome":"Millena Andrade","receita":17366,"pedidos":21,"ticket":827,"primeira":"2024-02","ultima":"2026-02","dias":2,"canal":"Ambos","cat":"VIP"},{"nome":"Mayara Caroline Dias","receita":16733,"pedidos":12,"ticket":1394,"primeira":"2024-02","ultima":"2025-12","dias":68,"canal":"Loja","cat":"VIP"},{"nome":"Bruna de Paula","receita":16456,"pedidos":16,"ticket":1029,"primeira":"2024-01","ultima":"2025-11","dias":93,"canal":"Ambos","cat":"VIP"},{"nome":"Paula Dias","receita":16243,"pedidos":33,"ticket":492,"primeira":"2024-01","ultima":"2026-02","dias":10,"canal":"Ambos","cat":"VIP"},{"nome":"Michele Jelski","receita":15648,"pedidos":19,"ticket":824,"primeira":"2025-12","ultima":"2026-02","dias":16,"canal":"Ambos","cat":"VIP"},{"nome":"Julia Canfild","receita":14580,"pedidos":42,"ticket":347,"primeira":"2024-02","ultima":"2026-02","dias":4,"canal":"Ambos","cat":"VIP"},{"nome":"Elizângela Linhares","receita":14551,"pedidos":19,"ticket":766,"primeira":"2024-01","ultima":"2024-09","dias":526,"canal":"Ambos","cat":"VIP"},{"nome":"Eliana Lopes Bastos","receita":14158,"pedidos":5,"ticket":2832,"primeira":"2024-04","ultima":"2025-05","dias":278,"canal":"Loja","cat":"Recorrente"},{"nome":"Simone G.K. Zogaib","receita":14086,"pedidos":10,"ticket":1409,"primeira":"2024-03","ultima":"2025-12","dias":84,"canal":"Loja","cat":"VIP"},{"nome":"Kátia piedade moreira","receita":13990,"pedidos":28,"ticket":500,"primeira":"2024-01","ultima":"2025-05","dias":281,"canal":"Loja","cat":"VIP"},{"nome":"Janete Bonfim","receita":13980,"pedidos":14,"ticket":999,"primeira":"2024-01","ultima":"2025-12","dias":69,"canal":"Loja","cat":"VIP"},{"nome":"Andrielly Antunes","receita":13723,"pedidos":27,"ticket":508,"primeira":"2024-01","ultima":"2026-02","dias":9,"canal":"Ambos","cat":"VIP"},{"nome":"Cibelle Mendes P. Saro","receita":13572,"pedidos":13,"ticket":1044,"primeira":"2024-05","ultima":"2025-12","dias":72,"canal":"Ambos","cat":"VIP"},{"nome":"Marina Tome","receita":13502,"pedidos":22,"ticket":614,"primeira":"2024-07","ultima":"2026-02","dias":25,"canal":"Ambos","cat":"VIP"},{"nome":"Renata Nogueira","receita":13493,"pedidos":23,"ticket":587,"primeira":"2024-02","ultima":"2025-12","dias":84,"canal":"Ambos","cat":"VIP"},{"nome":"Ariane Rocha Pereira Martins","receita":13228,"pedidos":21,"ticket":630,"primeira":"2024-04","ultima":"2025-09","dias":152,"canal":"Loja","cat":"VIP"},{"nome":"Priscila Lanzillotta","receita":13191,"pedidos":40,"ticket":330,"primeira":"2024-01","ultima":"2026-02","dias":2,"canal":"Ambos","cat":"VIP"}];
+
+const CLI_1X = [{"nome":"Carim ARIAS MATHEUS","receita":6372,"ticket":6373,"quando":"2024-01","dias":780,"canal":"Loja"},{"nome":"Noemia Afonso","receita":4599,"ticket":4600,"quando":"2025-12","dias":76,"canal":"Loja"},{"nome":"Francieli Bridi","receita":4072,"ticket":4072,"quando":"2025-12","dias":60,"canal":"Loja"},{"nome":"Vanessa Ranieri","receita":3842,"ticket":3843,"quando":"2025-10","dias":122,"canal":"Loja"},{"nome":"Heide Cazajeira Nunes","receita":3399,"ticket":3399,"quando":"2024-12","dias":426,"canal":"Loja"},{"nome":"Andrea Lima da Silva","receita":2880,"ticket":2880,"quando":"2024-09","dias":544,"canal":"Loja"},{"nome":"Ingrid Caridade","receita":2879,"ticket":2879,"quando":"2024-02","dias":756,"canal":"Site"},{"nome":"Elen Buzeid","receita":2848,"ticket":2848,"quando":"2024-06","dias":633,"canal":"Loja"},{"nome":"Silvia Ribeiro","receita":2803,"ticket":2803,"quando":"2025-05","dias":284,"canal":"Loja"},{"nome":"Thaiane Renata Bragante","receita":2679,"ticket":2679,"quando":"2025-05","dias":284,"canal":"Loja"},{"nome":"Sara Oliveira","receita":2668,"ticket":2668,"quando":"2024-05","dias":645,"canal":"Loja"},{"nome":"Mara Denise Martini","receita":2452,"ticket":2452,"quando":"2024-09","dias":540,"canal":"Loja"},{"nome":"Janaina Faller","receita":2364,"ticket":2364,"quando":"2025-08","dias":184,"canal":"Loja"},{"nome":"Bruna Scarense","receita":2363,"ticket":2363,"quando":"2024-12","dias":425,"canal":"Loja"},{"nome":"Renata Ursini","receita":2335,"ticket":2335,"quando":"2024-12","dias":439,"canal":"Loja"},{"nome":"Juliana Lamoso","receita":2316,"ticket":2316,"quando":"2026-01","dias":31,"canal":"Loja"},{"nome":"Daniele Ribeiro","receita":2253,"ticket":2253,"quando":"2024-08","dias":554,"canal":"Loja"},{"nome":"Ingrid Rachel Nunes Pretti","receita":2233,"ticket":2233,"quando":"2024-10","dias":503,"canal":"Loja"},{"nome":"Tatiane Batistela","receita":2204,"ticket":2204,"quando":"2024-06","dias":624,"canal":"Loja"},{"nome":"Alessandra Mendonça Vasques Ferreira","receita":2170,"ticket":2171,"quando":"2024-03","dias":720,"canal":"Loja"},{"nome":"Karilyn Feliciano","receita":2161,"ticket":2161,"quando":"2024-12","dias":439,"canal":"Loja"},{"nome":"Luana Batista","receita":2142,"ticket":2142,"quando":"2025-12","dias":67,"canal":"Loja"},{"nome":"Josefa Margarete dos Santos","receita":2116,"ticket":2117,"quando":"2025-06","dias":262,"canal":"Loja"},{"nome":"Renata Arraes Lopes","receita":2018,"ticket":2019,"quando":"2024-11","dias":479,"canal":"Loja"},{"nome":"Eliana Tauber","receita":1989,"ticket":1990,"quando":"2024-03","dias":713,"canal":"Loja"},{"nome":"Patricia Bulhões","receita":1982,"ticket":1982,"quando":"2024-12","dias":434,"canal":"Loja"},{"nome":"Maria Ilidia Troncoso","receita":1957,"ticket":1958,"quando":"2025-02","dias":373,"canal":"Loja"},{"nome":"Mithra Cherici","receita":1911,"ticket":1911,"quando":"2025-08","dias":190,"canal":"Loja"},{"nome":"Lorena Ovidio","receita":1874,"ticket":1874,"quando":"2024-05","dias":642,"canal":"Loja"},{"nome":"Cristiane Peres","receita":1846,"ticket":1846,"quando":"2024-12","dias":445,"canal":"Loja"},{"nome":"Sarah Ramos Souza","receita":1824,"ticket":1825,"quando":"2024-02","dias":757,"canal":"Loja"},{"nome":"Vanessa Fernandes Vellani","receita":1814,"ticket":1814,"quando":"2024-10","dias":493,"canal":"Loja"},{"nome":"Cláudia Balbino da Cruz","receita":1772,"ticket":1772,"quando":"2025-06","dias":263,"canal":"Loja"},{"nome":"Patrícia bispo dos Santos","receita":1760,"ticket":1760,"quando":"2025-05","dias":282,"canal":"Site"},{"nome":"Leticia Barbosa","receita":1756,"ticket":1756,"quando":"2025-04","dias":323,"canal":"Loja"},{"nome":"Gabriela De Almeida Oliveira","receita":1754,"ticket":1754,"quando":"2025-06","dias":253,"canal":"Loja"},{"nome":"Roberta LOVERRI","receita":1732,"ticket":1733,"quando":"2025-12","dias":79,"canal":"Loja"},{"nome":"Fabiane Nascimento","receita":1725,"ticket":1725,"quando":"2025-05","dias":279,"canal":"Loja"},{"nome":"Thamyres Mandira","receita":1674,"ticket":1674,"quando":"2025-11","dias":101,"canal":"Loja"},{"nome":"Natalia Berzan","receita":1665,"ticket":1665,"quando":"2025-09","dias":178,"canal":"Loja"},{"nome":"Jessika Cestari","receita":1664,"ticket":1664,"quando":"2025-12","dias":71,"canal":"Loja"},{"nome":"Andreia Lima","receita":1637,"ticket":1637,"quando":"2025-12","dias":79,"canal":"Loja"},{"nome":"Erika Brucha","receita":1635,"ticket":1636,"quando":"2025-12","dias":86,"canal":"Loja"},{"nome":"Nathslia Bannwart","receita":1635,"ticket":1635,"quando":"2025-12","dias":62,"canal":"Loja"},{"nome":"Priscila Caraviello","receita":1632,"ticket":1632,"quando":"2024-05","dias":656,"canal":"Loja"},{"nome":"Marcela Lapa","receita":1625,"ticket":1625,"quando":"2025-12","dias":81,"canal":"Loja"},{"nome":"Mariana Diegues","receita":1619,"ticket":1620,"quando":"2025-12","dias":83,"canal":"Loja"},{"nome":"Ana Paula","receita":1590,"ticket":1590,"quando":"2024-02","dias":759,"canal":"Loja"},{"nome":"Camila Bastouly","receita":1586,"ticket":1586,"quando":"2025-08","dias":191,"canal":"Loja"},{"nome":"Priscila Panalver","receita":1585,"ticket":1585,"quando":"2024-11","dias":473,"canal":"Loja"}];
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+const fmt=(v,d=0)=>{if(v==null||isNaN(v))return'—';if(Math.abs(v)>=1e6)return'R$'+(v/1e6).toFixed(1)+'M';if(Math.abs(v)>=1e3)return'R$'+(v/1e3).toFixed(0)+'k';return'R$'+v.toFixed(d);};
+const fmtN=v=>v==null||isNaN(v)?'—':v.toLocaleString('pt-BR');
+const ml=m=>{const[y,mo]=m.split('-');return['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+mo-1]+'/'+y.slice(2);};
+const getMths=(f,t)=>ALL_MONTHS.filter(m=>m>=f&&m<=t);
+const sliceData=(key,f,t)=>{const d=DATA[key],si=ALL_MONTHS.indexOf(d.s);return getMths(f,t).map(m=>{const i=ALL_MONTHS.indexOf(m)-si;return(i>=0&&i<d.v.length)?d.v[i]:null;});};
+const sum=a=>a.filter(x=>x!=null&&!isNaN(x)).reduce((a,b)=>a+b,0);
+const avg=a=>{const v=a.filter(x=>x!=null&&!isNaN(x));return v.length?sum(v)/v.length:0;};
+
+// ══════════════════════════════════════════
+// STATE & FILTERS
+// ══════════════════════════════════════════
+let state={from:'2024-01',to:'2026-02',canal:'total'};
+const charts={};
+const gc='rgba(255,255,255,0.05)',tc='#555350';
+
+function buildSelects(){
+  ['f-from','f-to'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    ALL_MONTHS.forEach(m=>{
+      const def=i===0?state.from:state.to;
+      el.innerHTML+=`<option value="${m}" ${m===def?'selected':''}>${ml(m)}</option>`;
+    });
+  });
+}
+function applyFilter(){
+  state.from=document.getElementById('f-from').value;
+  state.to=document.getElementById('f-to').value;
+  state.canal=document.getElementById('f-canal').value;
+  if(state.from>state.to){state.to=state.from;document.getElementById('f-to').value=state.to;}
+  renderAll();
+}
+function resetFilter(){
+  state={from:'2024-01',to:'2026-02',canal:'total'};
+  document.getElementById('f-from').value=state.from;
+  document.getElementById('f-to').value=state.to;
+  document.getElementById('f-canal').value=state.canal;
+  renderAll();
+}
+function setTab(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+function mkChart(id,type,data,opts){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{type,data,options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:tc,font:{size:10,family:'IBM Plex Sans'},boxWidth:11,padding:8}}},scales:{x:{grid:{color:gc},ticks:{color:tc,font:{size:9},maxRotation:45}},y:{grid:{color:gc},ticks:{color:tc,font:{size:9}}}}}});
+  if(opts&&opts.scalesY)charts[id].options.scales.y.ticks.callback=opts.scalesY;
+  if(opts&&opts.tooltip)charts[id].options.plugins.tooltip=opts.tooltip;
+  charts[id].update();
+}
+
+// ══════════════════════════════════════════
+// RENDER VENDAS
+// ══════════════════════════════════════════
+function renderVendas(){
+  const{from,to,canal}=state;
+  const months=getMths(from,to);
+  const labels=months.map(ml);
+  const rS=sliceData('receita_site',from,to);
+  const rL=sliceData('receita_loja',from,to);
+  const rT=months.map((_,i)=>(rS[i]||0)+(rL[i]||0));
+  let md=canal==='site'?rS:canal==='loja'?rL:rT;
+  let mn=canal==='site'?'Site':canal==='loja'?'Loja Física':'Total';
+  document.getElementById('ttl-v').textContent=mn.toLowerCase();
+  const tr=sum(md);
+  const metaMs=getMths(from,to).filter(m=>m>='2026-01');
+  const tmeta=sum(sliceData('metas_2026',from,to));
+  const ating=tmeta>0?(tr/tmeta*100):null;
+  const gap=tr-tmeta;
+  document.getElementById('kv-r').textContent=fmt(tr);
+  document.getElementById('kv-rs').textContent=months.length+' meses';
+  document.getElementById('kv-m').textContent=tmeta>0?fmt(tmeta):'sem meta';
+  document.getElementById('kv-ms').textContent=metaMs.length>0?metaMs.length+' meses c/ meta':'sem meta 2026';
+  document.getElementById('kv-a').textContent=ating!=null?ating.toFixed(1)+'%':'—';
+  document.getElementById('kv-as').textContent=ating!=null?(ating>=100?'✓ batida':'abaixo'):'';
+  document.getElementById('kv-g').textContent=tmeta>0?fmt(Math.abs(gap)):'—';
+  document.getElementById('kv-gs').textContent=gap>=0?'acima':gap<0?'abaixo':'';
+  const ds=canal==='total'?[
+    {label:'Site',data:rS,borderColor:'#8b7fff',borderWidth:1.5,pointRadius:2,tension:.35,fill:false},
+    {label:'Loja',data:rL,borderColor:'#3ecf8e',borderWidth:1.5,pointRadius:2,tension:.35,fill:false},
+    {label:'Total',data:rT,borderColor:'#f5a623',borderWidth:2,pointRadius:2,tension:.35,fill:false},
+  ]:[{label:mn,data:md,borderColor:'#8b7fff',backgroundColor:'rgba(139,127,255,0.07)',borderWidth:2,pointRadius:2,tension:.35,fill:true}];
+  if(metaMs.length>0){
+    const ml2=months.map(m=>m>='2026-01'?DATA.metas_2026.v[ALL_MONTHS.indexOf(m)-ALL_MONTHS.indexOf('2026-01')]:null);
+    ds.push({label:'Meta 2026',data:ml2,borderColor:'#f05252',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:.3,fill:false});
+  }
+  mkChart('cVendas','line',{labels,datasets:ds},{
+    scalesY:v=>fmt(v),
+    tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}
+  });
+  const mr=document.getElementById('meta-rows');mr.innerHTML='';
+  if(metaMs.length===0){mr.innerHTML='<div style="font-size:11px;color:var(--text3)">Sem meses de 2026 no filtro.</div>';return;}
+  metaMs.forEach(m=>{
+    const i=ALL_MONTHS.indexOf(m);
+    const rs=DATA.receita_site.v[i-ALL_MONTHS.indexOf('2024-01')]||0;
+    const rl=DATA.receita_loja.v[i-ALL_MONTHS.indexOf('2024-01')]||0;
+    const real=canal==='site'?rs:canal==='loja'?rl:rs+rl;
+    const meta=DATA.metas_2026.v[i-ALL_MONTHS.indexOf('2026-01')]||0;
+    const p=meta>0?(real/meta*100):0;
+    const color=p>=100?'var(--green)':p>=80?'var(--amber)':'var(--red)';
+    mr.innerHTML+=`<div class="meta-row"><div class="mh"><span class="ml">${ml(m)} — ${fmt(real)} / ${fmt(meta)}</span><span class="mp" style="color:${color}">${p.toFixed(1)}%</span></div><div class="meta-track"><div class="meta-fill" style="width:${Math.min(p,100)}%;background:${color}"></div></div></div>`;
+  });
+  document.getElementById('nota-m').textContent='Dados deduplicados. Fev/26 = R$290k total (site R$48k + loja R$241k).';
+}
+
+// ══════════════════════════════════════════
+// RENDER CLIENTES VIP
+// ══════════════════════════════════════════
+function renderClientes(){
+  const cat=document.getElementById('f-cli-cat').value;
+  const can=document.getElementById('f-cli-canal').value;
+  const sit=document.getElementById('f-cli-sit').value;
+  let rows=CLI_TOP50.filter(r=>{
+    if(cat&&r.cat!==cat)return false;
+    if(can&&r.canal!==can)return false;
+    if(sit){
+      if(sit==='ativo'&&r.dias>90)return false;
+      if(sit==='risco'&&(r.dias<=90||r.dias>180))return false;
+      if(sit==='perdido'&&r.dias<=180)return false;
+    }
+    return true;
+  });
+  document.getElementById('cli-count').textContent=`${rows.length} clientes`;
+  const tbody=document.getElementById('cli-tbody');tbody.innerHTML='';
+  rows.forEach((r,i)=>{
+    const statusCls=r.dias<=30?'b-hot':r.dias<=90?'b-morno':'b-frio';
+    const status=r.dias<=30?`🔥 ${r.dias}d`:r.dias<=90?`⚡ ${r.dias}d`:`❄ ${r.dias}d`;
+    const catBadge=r.cat==='VIP'?'b-vip':r.cat==='Recorrente'?'b-rec':'b-2x';
+    const canalBadge=r.canal==='Ambos'?'b-ambos':r.canal==='Loja'?'b-loja':'b-site';
+    tbody.innerHTML+=`<tr>
+      <td style="color:var(--text3)">${i+1}</td>
+      <td style="color:var(--text);font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis">${r.nome}</td>
+      <td style="color:var(--green)">${fmt(r.receita)}</td>
+      <td>${r.pedidos}x</td>
+      <td>${fmt(r.ticket)}</td>
+      <td>${r.primeira}</td>
+      <td>${r.ultima}</td>
+      <td class="${statusCls}">${status}</td>
+      <td><span class="badge ${canalBadge}">${r.canal}</span></td>
+      <td><span class="badge ${catBadge}">${r.cat}</span></td>
+    </tr>`;
+  });
+}
+
+// ══════════════════════════════════════════
+// RENDER 1X
+// ══════════════════════════════════════════
+function render1x(){
+  const urg=document.getElementById('f-1x-urg').value;
+  const can=document.getElementById('f-1x-canal').value;
+  const tick=parseInt(document.getElementById('f-1x-ticket').value)||0;
+  let rows=CLI_1X.filter(r=>{
+    if(can&&r.canal!==can)return false;
+    if(tick&&r.receita<tick)return false;
+    if(urg){
+      if(urg==='quente'&&r.dias>90)return false;
+      if(urg==='morno'&&(r.dias<=90||r.dias>365))return false;
+      if(urg==='frio'&&r.dias<=365)return false;
+    }
+    return true;
+  });
+  document.getElementById('1x-count').textContent=`${rows.length} clientes`;
+  const tbody=document.getElementById('1x-tbody');tbody.innerHTML='';
+  rows.forEach((r,i)=>{
+    const urgCls=r.dias<=90?'b-hot':r.dias<=365?'b-morno':'b-frio';
+    const urgLabel=r.dias<=90?'🔥 Quente':r.dias<=365?'⚡ Morno':'❄ Frio';
+    const canalBadge=r.canal==='Loja'?'b-loja':'b-site';
+    tbody.innerHTML+=`<tr>
+      <td style="color:var(--text3)">${i+1}</td>
+      <td style="color:var(--text);font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis">${r.nome}</td>
+      <td style="color:var(--amber)">${fmt(r.receita)}</td>
+      <td>${r.quando}</td>
+      <td>${r.dias} dias</td>
+      <td><span class="badge ${canalBadge}">${r.canal}</span></td>
+      <td class="${urgCls}">${urgLabel}</td>
+    </tr>`;
+  });
+}
+
+// ══════════════════════════════════════════
+// RENDER TICKET
+// ══════════════════════════════════════════
+function renderTicket(){
+  const{from,to}=state;
+  const months=getMths(from,to);const labels=months.map(ml);
+  const tS=sliceData('ticket_site',from,to);const tL=sliceData('ticket_loja',from,to);
+  const pS=sliceData('ppp_site',from,to);const pL=sliceData('ppp_loja',from,to);
+  document.getElementById('kt-site').textContent='R$'+avg(tS).toFixed(0);
+  document.getElementById('kt-loja').textContent='R$'+avg(tL).toFixed(0);
+  document.getElementById('kp-site').textContent=avg(pS).toFixed(2)+'x';
+  document.getElementById('kp-loja').textContent=avg(pL).toFixed(2)+'x';
+  mkChart('cTicket','line',{labels,datasets:[
+    {label:'Site',data:tS,borderColor:'#8b7fff',borderWidth:2,pointRadius:2,tension:.35,fill:false},
+    {label:'Loja',data:tL,borderColor:'#3ecf8e',borderWidth:2,pointRadius:2,tension:.35,fill:false}
+  ]},{scalesY:v=>'R$'+v,tooltip:{callbacks:{label:c=>` ${c.dataset.label}: R$${c.parsed.y.toFixed(0)}`}}});
+  mkChart('cPecas','line',{labels,datasets:[
+    {label:'Site',data:pS,borderColor:'#f5a623',borderWidth:2,pointRadius:2,tension:.35,fill:false},
+    {label:'Loja',data:pL,borderColor:'#22d3c5',borderWidth:2,pointRadius:2,tension:.35,fill:false}
+  ]},{scalesY:v=>v.toFixed(1)+'x',tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toFixed(2)}x`}}});
+}
+
+// ══════════════════════════════════════════
+// RENDER RETENÇÃO
+// ══════════════════════════════════════════
+function renderRetencao(){
+  const{from,to}=state;
+  const months=getMths(from,to).filter(m=>m>='2024-02');
+  const labels=months.map(ml);
+  const churnVals=sliceData('churn',from,to);
+  mkChart('cChurn','line',{labels,datasets:[
+    {label:'Churn (%)',data:churnVals,borderColor:'#f05252',backgroundColor:'rgba(240,82,82,0.07)',borderWidth:2,pointRadius:2,tension:.3,fill:true}
+  ]},{
+    scalesY:v=>v+'%',
+    tooltip:{callbacks:{label:c=>` Churn: ${c.parsed.y}%`}}
+  });
+  charts['cChurn'].options.scales.y.min=50;
+  charts['cChurn'].options.scales.y.max=100;
+  charts['cChurn'].update();
+}
+
+// ══════════════════════════════════════════
+// RENDER FORNECEDORES (responsivo ao filtro)
+// ══════════════════════════════════════════
+function renderFornecedores(){
+  const{from,to}=state;
+  const months=getMths(from,to);
+  const fNames=Object.keys(FORN_MES);
+  // Somar por fornecedor no período
+  const fornTotais={};
+  fNames.forEach(f=>{
+    fornTotais[f]=months.reduce((s,m)=>s+(FORN_MES[f][m]||0),0);
+  });
+  // Ordenar
+  const sorted=Object.entries(fornTotais).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const totalPeriod=sorted.reduce((s,[,v])=>s+v,0);
+  const ativos=sorted.length;
+  // KPIs
+  if(sorted.length>0){
+    const top=sorted[0];
+    document.getElementById('forn-top-nome').textContent=top[0];
+    document.getElementById('forn-top-pct').textContent=(top[1]/totalPeriod*100).toFixed(1)+'% no período';
+    const top3=sorted.slice(0,3).reduce((s,[,v])=>s+v,0);
+    document.getElementById('forn-top3').textContent=(top3/totalPeriod*100).toFixed(1)+'%';
+    document.getElementById('forn-top3-sub').textContent=sorted.slice(0,3).map(([n])=>n).join(' + ');
+  }
+  document.getElementById('forn-total-r').textContent=fmt(totalPeriod);
+  document.getElementById('forn-ativos').textContent=ativos;
+  document.getElementById('forn-periodo-ttl').textContent=ml(from)+' → '+ml(to);
+  // Lista
+  const fl=document.getElementById('forn-list');fl.innerHTML='';
+  sorted.slice(0,10).forEach(([n,v],i)=>{
+    const pct=(v/totalPeriod*100).toFixed(1);
+    const bw=(v/sorted[0][1]*100).toFixed(0);
+    fl.innerHTML+=`<div class="forn-item"><div class="forn-rank">${String(i+1).padStart(2,'0')}</div><div class="forn-name">${n}</div><div class="forn-bar-wrap"><div class="forn-bar" style="width:${bw}%"></div></div><div class="forn-val">${pct}% · ${fmt(v)}</div></div>`;
+  });
+  // Insight dinâmico
+  const top1pct=sorted.length>0?(sorted[0][1]/totalPeriod*100):0;
+  document.getElementById('forn-ins').innerHTML=top1pct>20?`<b>${sorted[0]?.[0]} representa ${top1pct.toFixed(1)}% da receita no período filtrado.</b> Concentração elevada — risco operacional relevante.`:`Concentração dentro do limite aceitável no período filtrado (maior: ${top1pct.toFixed(1)}%).`;
+  // Gráfico evolução top 5
+  const top5=sorted.slice(0,5).map(([n])=>n);
+  const colors=['#8b7fff','#3ecf8e','#f5a623','#f05252','#22d3c5'];
+  const ds=top5.map((n,i)=>({
+    label:n,
+    data:months.map(m=>FORN_MES[n]?.[m]||0),
+    borderColor:colors[i],borderWidth:1.5,pointRadius:1,tension:.35,fill:false
+  }));
+  mkChart('cForn','line',{labels:months.map(ml),datasets:ds},{
+    scalesY:v=>fmt(v),
+    tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}
+  });
+}
+
+// ══════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════
+function renderAll(){
+  document.getElementById('hdr-info').innerHTML=`${ml(state.from)} → ${ml(state.to)}<br>${state.canal==='total'?'Todos os canais':state.canal==='site'?'Site':'Loja'}<br>${new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}`;
+  document.getElementById('fi').textContent=getMths(state.from,state.to).length+' meses';
+  renderVendas();
+  renderClientes();
+  render1x();
+  renderTicket();
+  renderRetencao();
+  renderFornecedores();
+}
+
+buildSelects();
+renderAll();
+</script>
+</body>
+</html>
